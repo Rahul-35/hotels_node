@@ -1,6 +1,7 @@
 const express=require('express');
 const app=express();
 const db=require('./db.js');
+require('dotenv').config();
 
 const bodyParser=require('body-parser');
 app.use(bodyParser.json());
@@ -15,8 +16,9 @@ app.use('/person',personRoute);
 const menuR=require('./routes/menuRoutes.js');
 app.use('/menu',menuR);
 
+const port=process.env.PORT||2000;
 
-app.listen(2000,()=>{
+app.listen(port,()=>{
     console.log("Server is live at port 2000");
 });
 

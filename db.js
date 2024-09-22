@@ -1,8 +1,10 @@
 const mongoose=require('mongoose');
+require('dotenv').config();
 
 //define mongo db connection url
 
-const monURL='mongodb://127.0.0.1:27017/hotels';
+//const monURL=process.env.localURL; //for local url
+const monURL=process.env.dbURL; // for mongodb atlas url in order to use env we need process 
 
 //set up mongodb connection
 
