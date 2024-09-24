@@ -2,11 +2,43 @@ const express=require('express');
 const app=express();
 const db=require('./db.js');
 require('dotenv').config();
-
+const port=process.env.PORT||2000;                      //in 
 const bodyParser=require('body-parser');
-app.use(bodyParser.json());
+app.use(bodyParser.json());                             //This will fetch the body from the request into a form
+const passport=require('passport');
+const localStrategy=require('passport-local').Strategy;   //this is for username and password
 
-app.get("/",(req,res)=>{
+//Middleware
+const logReq=(req,res,next)=>{
+    console.log(`[${new Date().toLocaleString()}] Request made to url: ${req.originalUrl}`);
+    next(); //Move on to the next phase
+}
+app.use(logReq); //this will make use of log in all requests
+
+const Person=require('./models/Person.js');
+passport.use(new localStrategy(async (user,pwd,done)=>{
+    try{
+            console.log('Received credentials:',user,pwd);
+            const usern=await Person.findOne({username:user});
+            if(!usern){
+                return done(null,false,{message:'Incorrect username'});
+            }
+            const isPwdmatch=usern.password==pwd?true:false;
+            if(isPwdmatch){
+                return done(null,usern);
+            }
+            else{
+                return(null,false,{message:'Incorrect Password'});
+            }
+    }
+    catch(error){
+        return done(error);
+    }
+}));
+
+app.use(passport.initialize());
+
+app.get("/",passport.authenticate('local',{session:false}),(req,res)=>{
     res.send("Hello Welcome to our Hotel");
 });
 
@@ -15,8 +47,6 @@ app.use('/person',personRoute);
 
 const menuR=require('./routes/menuRoutes.js');
 app.use('/menu',menuR);
-
-const port=process.env.PORT||2000;
 
 app.listen(port,()=>{
     console.log("Server is live at port 2000");

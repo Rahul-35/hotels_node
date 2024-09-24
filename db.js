@@ -3,8 +3,8 @@ require('dotenv').config();
 
 //define mongo db connection url
 
-//const monURL=process.env.localURL; //for local url
-const monURL=process.env.dbURL; // for mongodb atlas url in order to use env we need process 
+const monURL=process.env.localURL; //for local url
+//const monURL=process.env.dbURL; // for mongodb atlas url in order to use env we need process 
 
 //set up mongodb connection
 
