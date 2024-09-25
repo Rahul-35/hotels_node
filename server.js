@@ -5,48 +5,43 @@ require('dotenv').config();
 const port=process.env.PORT||2000;                      //in 
 const bodyParser=require('body-parser');
 app.use(bodyParser.json());                             //This will fetch the body from the request into a form
-const passport=require('passport');
-const localStrategy=require('passport-local').Strategy;   //this is for username and password
+const passport=require('./auth.js');
+ //this is for username and password
 
 //Middleware
-const logReq=(req,res,next)=>{
-    console.log(`[${new Date().toLocaleString()}] Request made to url: ${req.originalUrl}`);
-    next(); //Move on to the next phase
-}
-app.use(logReq); //this will make use of log in all requests
+const logReq = (req, res, next) => {
+    // Parse the URL to extract query parameters
+    const url = new URL(req.protocol + '://' + req.get('host') + req.originalUrl);
+    const queryParams = new URLSearchParams(url.search);
 
-const Person=require('./models/Person.js');
-passport.use(new localStrategy(async (user,pwd,done)=>{
-    try{
-            console.log('Received credentials:',user,pwd);
-            const usern=await Person.findOne({username:user});
-            if(!usern){
-                return done(null,false,{message:'Incorrect username'});
-            }
-            const isPwdmatch=usern.password==pwd?true:false;
-            if(isPwdmatch){
-                return done(null,usern);
-            }
-            else{
-                return(null,false,{message:'Incorrect Password'});
-            }
-    }
-    catch(error){
-        return done(error);
-    }
-}));
+    // Mask sensitive query parameters
+    if (queryParams.has('username')) queryParams.set('username', '****');
+    if (queryParams.has('password')) queryParams.set('password', '****');
+
+    // Reconstruct the sanitized URL
+    const sanitizedUrl = url.pathname + '?' + queryParams.toString();
+
+    // Log the sanitized URL
+    console.log(`[${new Date().toLocaleString()}] Request made to url: ${sanitizedUrl}`);
+
+    next(); // Move on to the next phase
+};
+
+app.use(logReq); //this will make use of log in all requests
 
 app.use(passport.initialize());
 
-app.get("/",passport.authenticate('local',{session:false}),(req,res)=>{
+const localMidware=passport.authenticate('local',{session:false});
+
+app.get("/",localMidware,(req,res)=>{
     res.send("Hello Welcome to our Hotel");
 });
 
 const personRoute=require('./routes/personRoutes.js');
-app.use('/person',personRoute);
-
 const menuR=require('./routes/menuRoutes.js');
-app.use('/menu',menuR);
+
+app.use('/person',localMidware,personRoute);
+app.use('/menu',localMidware,menuR);
 
 app.listen(port,()=>{
     console.log("Server is live at port 2000");
